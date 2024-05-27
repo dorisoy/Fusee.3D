@@ -135,11 +135,6 @@ namespace Fusee.Engine.Common
         /// </summary>
         public void DoRender();
 
-        /// <summary>
-        /// Does the postrender of this instance.
-        /// SLIRP
-        /// </summary>
-        public void DoPostRender();
 
         /// <summary>
         /// Does the resize on this instance.
@@ -168,10 +163,6 @@ namespace Fusee.Engine.Common
         /// Occurs when [Render] is called.
         /// </summary>
         event EventHandler<RenderEventArgs> Render;
-        /// <summary>
-        /// Occurs when [PostRender] is called.
-        /// </summary>
-        event EventHandler<PostRenderEventArgs> PostRender;
         /// <summary>
         /// Occurs when [Resize] is called.
         /// </summary>
