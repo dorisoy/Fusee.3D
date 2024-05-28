@@ -206,6 +206,9 @@ namespace Fusee.Examples.PointCloudPotree2.Core
                 OocLoader.IsUserMoving = false;*/
             //--------------------------------------------------------------------------------------------
 
+            // SLIRP
+            // in SLIRP we take the input from the SLIRP Client
+            /*
             // Mouse and keyboard movement
             if (Input.Keyboard.LeftRightAxis != 0 || Input.Keyboard.UpDownAxis != 0)
                 _keys = true;
@@ -234,6 +237,8 @@ namespace Fusee.Examples.PointCloudPotree2.Core
             _angleVelVert = 0;
 
             _camTransform.FpsView(_angleHorz, _angleVert, Input.Keyboard.WSAxis, Input.Keyboard.ADAxis, Time.DeltaTimeUpdate * 20);
+            */
+
         }
 
         private void OnThresholdChanged(int newValue)
