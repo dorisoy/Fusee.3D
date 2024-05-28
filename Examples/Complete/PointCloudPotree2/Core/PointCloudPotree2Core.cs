@@ -55,6 +55,8 @@ namespace Fusee.Examples.PointCloudPotree2.Core
 
         //Expose camera to use it in SLIRP
         public Camera MainCamera => _cam;
+        public Transform MainCameraTransform => _camTransform;
+        public SceneNode MainCameraNode => _camNode;
 
         public void OnLoadNewFile(object sender, EventArgs e)
         {

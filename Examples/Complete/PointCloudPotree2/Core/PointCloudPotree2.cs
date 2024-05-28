@@ -24,7 +24,7 @@ namespace Fusee.Examples.PointCloudPotree2.Core
         private PointCloudPotree2Core _pointRenderingCore;
 
         // Changed for SLIRP
-        public Camera MainCamera => _pointRenderingCore?.MainCamera;
+        public SceneNode MainCameraSceneNode => _pointRenderingCore?.MainCameraNode;
         public PointCloudPotree2Core Core => _pointRenderingCore;
 
         public PointCloudPotree2()
