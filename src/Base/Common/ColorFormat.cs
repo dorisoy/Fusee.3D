@@ -59,5 +59,11 @@
         /// RGBA int, 32bit.
         /// </summary>
         iRGBA32,
+
+        /// <summary>
+        /// SLIRP
+        /// YUV 420, 32bit.
+        /// </summary>
+        //YUV420,
     }
 }

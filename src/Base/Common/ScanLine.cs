@@ -64,6 +64,9 @@ namespace Fusee.Base.Common
                     ColorFormat.Depth24 => 3,
                     ColorFormat.uiRgb8 => 3,
                     ColorFormat.RGBA => 4,
+                    // SLIRP
+                    // ColorFormat.YUV420 => 4,
+                    // SLIRP close
                     ColorFormat.fRGB16 => 6,
                     ColorFormat.fRGBA16 => 8,
                     ColorFormat.fRGB32 => 12,
