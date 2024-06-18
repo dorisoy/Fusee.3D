@@ -16,7 +16,12 @@ namespace Fusee.Examples.PointCloudPotree2.Core
     {
         public bool RenderToTexture { get; set; }
 
-        public WritableTexture RenderTexture { get; private set; }
+        public WritableTexture RenderTexture
+        {
+            get; 
+            // SLIRP
+            set;
+        }
 
         public bool ClosingRequested
         {
@@ -119,7 +124,7 @@ namespace Fusee.Examples.PointCloudPotree2.Core
             {
                 //SLIRP
                 BackgroundColor = float4.Zero,
-                RenderTexture = RenderTexture
+                //RenderTexture = RenderTexture
             };
 
             _camNode = new SceneNode()
