@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 
 namespace Fusee.Base.Common
 {
@@ -37,8 +37,9 @@ namespace Fusee.Base.Common
                     ColorFormat == ColorFormat.Depth24 ||
                     ColorFormat == ColorFormat.uiRgb8
                     ? 3 :
-                    ColorFormat == ColorFormat.RGBA 
+                    ColorFormat == ColorFormat.RGBA
                     // SLIRP
+                    //|| ColorFormat == ColorFormat.BGRA
                     //|| ColorFormat == ColorFormat.YUV420
                     ? 4 :
                     ColorFormat == ColorFormat.fRGB16
