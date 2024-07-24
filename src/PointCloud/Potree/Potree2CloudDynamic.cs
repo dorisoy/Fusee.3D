@@ -143,8 +143,14 @@ namespace Fusee.PointCloud.Potree
 
             foreach (var mesh in meshes)
             {
+                if (mesh.Flags == null || mesh.Flags.Length == 0) continue;
+
+                if (countStartSlice + mesh.Flags.Length > points.Span.Length)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(points), "The slice range is outside the bounds of points span.");
+                }
+
                 mesh.Name = string.Empty;
-                if (mesh.Flags == null) continue;
                 var slice = points.Span.Slice(countStartSlice, mesh.Flags.Length);
 
                 for (int i = 0; i < slice.Length; i++)
@@ -161,7 +167,6 @@ namespace Fusee.PointCloud.Potree
         /// Determines if new Meshes should be loaded.
         /// </summary>
         public bool LoadNewMeshes { get; set; } = true;
-
 
         private List<OctantId> _visibleOctantsCache = new();
 
