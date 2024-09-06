@@ -26,9 +26,9 @@
 		<ProjectReference Include="$(FuseeEngineRoot)\Examples\Complete\Deferred\Core\Fusee.Examples.Deferred.Core.csproj" />
 		<ProjectReference Include="$(FuseeEngineRoot)\Examples\Complete\UI\Core\Fusee.Examples.UI.Core.csproj" />
 
-		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.10.0" />
-		<PackageReference Include="NUnit" Version="4.1.0" />
-		<PackageReference Include="NUnitLite" Version="4.1.0" />
+		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+		<PackageReference Include="NUnit" Version="4.2.2" />
+		<PackageReference Include="NUnitLite" Version="4.2.2" />
 		<PackageReference Include="NUnit.Analyzers" Version="4.3.0">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
