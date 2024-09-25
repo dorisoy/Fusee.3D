@@ -9,6 +9,8 @@
 		<Description>Fusee Engine Imp Graphics Desktop</Description>
 
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+
+		<Platforms>AnyCPU;x64</Platforms>
 	</PropertyGroup>
 
 	<ItemGroup>
