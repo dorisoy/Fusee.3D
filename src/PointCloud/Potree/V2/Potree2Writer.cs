@@ -65,6 +65,8 @@ namespace Fusee.PointCloud.Potree.V2
                     }
                 }
             }
+
+            PotreeData.WriteViewAccessor.Flush();
         }
     }
 }

@@ -170,9 +170,10 @@ namespace Fusee.PointCloud.Potree.V2
         /// </summary>
         /// <param name="id">Id of the octant.</param>
         /// <returns></returns>
-        public MemoryMappedFile LoadVisualizationPointData(OctantId id)
+        public MemoryMappedFile? LoadVisualizationPointData(OctantId id)
         {
-            Guard.IsNotNull(PotreeData);
+            if (PotreeData == null)
+                return null;
             var node = PotreeData.GetNode(id);
 
             // if node is null the hierarchy is broken and we look for an octant that isn't there...

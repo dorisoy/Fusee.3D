@@ -43,6 +43,14 @@ namespace Fusee.PointCloud.Core
         public abstract IEnumerable<TGpuData>? GetGpuData(OctantId guid, Func<bool>? doUpdateIf);
 
         /// <summary>
+        /// Tries to fetch the VisualisationPoints from the cache.
+        /// Doesn't try to trigger point loading, doesn't change cache entries.
+        /// </summary>
+        /// <param name="octantId"></param>
+        /// <returns></returns>
+        public abstract MemoryOwner<VisualizationPoint>? GetVisualizationPoints(OctantId octantId);
+
+        /// <summary>
         /// Loads points from the hard drive if they are neither in the loading queue nor in the PointCahce.
         /// </summary>
         /// <param name="guid">The octant for which the points should be loaded.</param>
@@ -53,6 +61,11 @@ namespace Fusee.PointCloud.Core
         /// Make sure to call this on the main thread.
         /// </summary>
         public abstract void ProcessDisposeQueue();
+
+        /// <summary>
+        /// Stops all data handling threads.
+        /// </summary>
+        public abstract void Stop();
 
         /// <summary>
         /// Allows to update meshes with data from the points.

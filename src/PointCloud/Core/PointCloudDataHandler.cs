@@ -26,7 +26,7 @@ namespace Fusee.PointCloud.Core
     /// Delegate that allows to inject the loading method of the PointReader - loads the points from file.
     /// </summary>
     /// <param name="guid">Unique ID of an octant.</param>
-    public delegate MemoryMappedFile LoadPointsHandler(OctantId guid);
+    public delegate MemoryMappedFile? LoadPointsHandler(OctantId guid);
 
     /// <summary>
     /// Delegate that allows to inject method of the PointReader that knows how to return a byte array containing all bytes of one attribute of the point cloud.
@@ -183,23 +183,21 @@ namespace Fusee.PointCloud.Core
                     }
 
                     _loadingPointsTriggeredFor.TryPop(out var guid);
-                    try
+
+                    if (!_rawPointCache.TryGetValue(guid, out var pointsMmf))
                     {
-                        if (!_rawPointCache.TryGetValue(guid, out var pointsMmf))
+                        if (_ctsLoad.IsCancellationRequested) break;
+                        //Returns null if PotreeData is null - this should only happen when the point cloud is closing.
+                        pointsMmf = _loadPointsHandler.Invoke(guid);
+                        if (pointsMmf == null)
                         {
-                            pointsMmf = _loadPointsHandler.Invoke(guid);
-                            _rawPointCache.AddOrUpdate(guid, pointsMmf);
+                            _ctsLoad.Cancel();
+                            break;
                         }
-
-                        CreateVisPointCacheEntry(pointsMmf, guid);
-
-                    }
-                    catch (Exception e)
-                    {
-                        // if an exception happened during loading process call the error event for further handling of the situation
-                        OnLoadingErrorEvent?.Invoke(this, new ErrorEventArgs(e));
+                        _rawPointCache.AddOrUpdate(guid, pointsMmf);
                     }
 
+                    CreateVisPointCacheEntry(pointsMmf, guid);
                 }
             })
             {
@@ -225,8 +223,8 @@ namespace Fusee.PointCloud.Core
                         continue;
                     };
 
+                    if (_ctsCreate.IsCancellationRequested) break;
                     _creatingMeshesTriggeredFor.TryPop(out octantId);
-                    int numberOfPointsInNode = (int)_getNumberOfPointsInNode(octantId);
                     IEnumerable<TGpuData> gpuData;
 
                     if (!_doRenderInstanced)
@@ -248,6 +246,11 @@ namespace Fusee.PointCloud.Core
             };
             _meshCreationThead.Start();
 
+            var updateGpuDataOptions = new ParallelOptions()
+            {
+                CancellationToken = _ctsUpdate.Token,
+                MaxDegreeOfParallelism = Environment.ProcessorCount
+            };
             _meshUpdateThread = new Thread(() =>
             {
                 while (!_ctsUpdate.IsCancellationRequested)
@@ -257,10 +260,10 @@ namespace Fusee.PointCloud.Core
                         Thread.Sleep(100);
                         continue;
                     }
-
-                    Parallel.ForEach(_queuedForUpdate, item =>
+                    Parallel.ForEach(_queuedForUpdate, updateGpuDataOptions, item =>
                     {
-                        UpdateGpuData(item.Item1, item.Item2);
+                        if (!_ctsUpdate.Token.IsCancellationRequested)
+                            UpdateGpuData(item.Item1, item.Item2);
                     });
                     _queuedForUpdate.Clear();
                 }
@@ -270,7 +273,19 @@ namespace Fusee.PointCloud.Core
             };
             _meshUpdateThread.Start();
         }
-       
+
+        private bool _wasStopped;
+        public override void Stop()
+        {
+            if (_wasStopped) return;
+            _ctsCreate.Cancel();
+            _ctsLoad.Cancel();
+            _ctsUpdate.Cancel();
+            _pointLoadingThead.Join();
+            _meshCreationThead.Join();
+            _meshUpdateThread.Join();
+            _wasStopped = true;
+        }
 
         /// <summary>
         /// First looks in the mesh cache, if there isn't pending update for this mesh, return.
@@ -306,6 +321,19 @@ namespace Fusee.PointCloud.Core
                 return gpuData;
 
             //no points yet, probably in loading queue
+            return null;
+        }
+
+        /// <summary>
+        /// Tries to fetch the VisualisationPoints from the cache.
+        /// Doesn't try to trigger point loading, doesn't change cache entries.
+        /// </summary>
+        /// <param name="octantId"></param>
+        /// <returns></returns>
+        public override MemoryOwner<VisualizationPoint>? GetVisualizationPoints(OctantId octantId)
+        {
+            if (_visPtCache.TryGetValue(octantId, out var points))
+                return points;
             return null;
         }
 
@@ -475,11 +503,7 @@ namespace Fusee.PointCloud.Core
                     }
                 }
 
-                _ctsCreate.Cancel();
-                _ctsLoad.Cancel();
-                _pointLoadingThead.Join();
-                _meshCreationThead.Join();
-                _meshUpdateThread.Join();
+                Stop();
 
                 // Note disposing has been done.
                 _disposed = true;

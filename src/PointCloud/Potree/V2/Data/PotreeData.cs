@@ -24,7 +24,7 @@ namespace Fusee.PointCloud.Potree.V2.Data
         /// <summary>
         /// Returns a reference to the memory mapped file for octree.bin.
         /// </summary>
-        internal MemoryMappedFile OctreeMappedFile { get; }
+        public MemoryMappedFile OctreeMappedFile { get; }
 
         /// <summary>
         /// Returns a reference to the memory mapped file view accessor for reading.
