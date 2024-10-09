@@ -279,7 +279,7 @@ namespace Fusee.Engine.Core
             }
 
             //Early out for the case that the scene is rendered with more than one canvas and the mouse isn't inside the correct one.
-            if (pickCam == null || pickCam == default)
+            if (pickCam == null || pickCam == default(CameraResult))
                 return null;
 
             CurrentCameraResult = pickCam;
