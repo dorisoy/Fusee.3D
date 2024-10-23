@@ -18,33 +18,36 @@ Android。使用 Xamarin，您的代码将转换为原生 Android apk。目前�
 # 先决条件
 在安装FUSEE之前，请确保已安装以下软件。
 
-# Blender （可选）
+## Blender （可选）
 使用开源 3D 建模软件Blender创建 3D 模型，并将其用作 FUSEE 应用程序中的资产。FUSEE 安装将尝试检测您机器上的 Blender 安装，并将安装 FUSEE Blender 插件。
 
 从https://www.blender.org/download/安装Blender
 
-# .NET SDK（必需）
+## .NET SDK（必需）
 FUSEE 应用程序是使用 .NET SDK（版本 6 或更高版本）创建的 - 基于 OpenSource 构建的独立于平台的 .NET Framework。
 
 从 https://www.microsoft.com/net/download/安装 .NET SDK
 
-# Visual Studio Code（必需）
+## Visual Studio Code（必需）
 编辑您的 FUSEE App 源代码，调试您的应用程序的功能，构建您的应用程序并将其从流行的 OpenSource 轻量级代码编辑器中发布到支持的平台。
 
 从https://code.visualstudio.com/download安装 Visual Studio Code
 
-# 扩展：C# Dev Kit（必需）
+## 扩展：C# Dev Kit（必需）
 要在 Visual Studio Code 中开发 C#/.NET 应用程序，需要一个扩展： [https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.csdevkit](https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.csdevkit)
 从上面的链接安装 C# Dev Kit Extension 或者 打开 Visual Studio Code
 打开Extensions窗格 ( Ctrl+Shift+X)
 C#在搜索框中输入
 从搜索结果中安装“C# Dev Kit”扩展
 
-
 # 安装
 [https://fusee3d.org/getting-started/install-fusee.html](https://fusee3d.org/getting-started/install-fusee.html)
 
+# 示例
+[https://fusee3d.org/examples/examples.html](https://fusee3d.org/examples/examples.html)
 
+# API 
+[https://fusee3d.org/api/index.html](https://fusee3d.org/api/index.html)
 
 | master | develop |
 | ------ | ------- |
