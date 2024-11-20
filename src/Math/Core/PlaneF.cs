@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 
 namespace Fusee.Math.Core
 {
@@ -8,11 +9,13 @@ namespace Fusee.Math.Core
     /// The plane divides a space into two half-spaces.The direction plane's normal vector defines the "outer" or negative half-space.
     /// Points that lie in the positive half space of the plane do have a negative signed distance to the plane.
     /// </summary>
+    [JsonObject(MemberSerialization = MemberSerialization.OptIn)]
     public struct PlaneF
     {
         /// <summary>
         /// The A plane coefficient.
         /// </summary>
+        [JsonProperty(PropertyName = "A")]
         public float A
         {
             get => _a;
@@ -22,11 +25,12 @@ namespace Fusee.Math.Core
                 _normal.x = _a;
             }
         }
-        private float _a;
+        private float _a = 0;
 
         /// <summary>
         /// The B plane coefficient.
         /// </summary>
+        [JsonProperty(PropertyName = "B")]
         public float B
         {
             get => _b;
@@ -36,11 +40,12 @@ namespace Fusee.Math.Core
                 _normal.y = _b;
             }
         }
-        private float _b;
+        private float _b = 0;
 
         /// <summary>
         /// The C plane coefficient.
         /// </summary>
+        [JsonProperty(PropertyName = "C")]
         public float C
         {
             get => _c;
@@ -50,12 +55,13 @@ namespace Fusee.Math.Core
                 _normal.z = _c;
             }
         }
-        private float _c;
+        private float _c = 1;
 
         /// <summary>
         /// The D plane coefficient.
         /// </summary>
-        public float D;
+        [JsonProperty(PropertyName = "D")]
+        public float D = 1;
 
         /// <summary>
         /// The plane's normal vector. May NOT be of unit length if the plane isn't normalized.
@@ -70,7 +76,21 @@ namespace Fusee.Math.Core
                 return _normal;
             }
         }
-        private float3 _normal;
+        private float3 _normal = float3.UnitZ;
+
+        /// <summary>
+        /// Creates a plane from a normal and a point.
+        /// </summary>
+        /// <param name="normal">The plane's normal vector.</param>
+        /// <param name="point">A point on the plane.</param>
+        public PlaneF(float3 normal, float3 point)
+        {
+            A = normal.x;
+            B = normal.y;
+            C = normal.z;
+
+            D = A * point.x + B * point.y + C * point.z;
+        }
 
         /// <summary>
         /// Normalizes this plane.
