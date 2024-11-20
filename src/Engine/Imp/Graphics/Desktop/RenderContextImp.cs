@@ -204,7 +204,12 @@ namespace Fusee.Engine.Imp.Graphics.Desktop
                 ColorFormat.Depth16 => (SizedInternalFormat)All.DepthComponent16,
                 ColorFormat.RGB => (SizedInternalFormat)All.Rgb8,
                 ColorFormat.Intensity => (SizedInternalFormat)All.R8,
+                // SLIRP
+                // ColorFormat.BGRA => (SizedInternalFormat)All.Bgra,
+                // ColorFormat.YUV420 => (SizedInternalFormat)All.YUV420,
+                // SLIRP close
                 _ => throw new ArgumentOutOfRangeException("SizedInternalFormat not supported. Try to use a format with r,g,b and a components."),
+
             };
         }
 

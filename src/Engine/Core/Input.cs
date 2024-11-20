@@ -403,8 +403,6 @@ namespace Fusee.Engine.Core
         /// </remarks>
         public static void AddDriverImp(IInputDriverImp inputDriver) => Instance.AddInputDriverImp(inputDriver);
 
-
-
         private void OnNewDeviceImpConnected(object sender, NewDeviceImpConnectedArgs args)
         {
             if (sender == null) throw new ArgumentNullException(nameof(sender));

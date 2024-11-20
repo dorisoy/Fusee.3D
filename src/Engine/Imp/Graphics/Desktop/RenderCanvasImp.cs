@@ -206,6 +206,9 @@ namespace Fusee.Engine.Imp.Graphics.Desktop
 
         internal RenderCanvasGameWindow _gameWindow;
 
+        // SLIRP
+        // has to be exposed so that the SLIRP program can map new input resources
+        protected GameWindow GW => _gameWindow;
         #endregion
 
         #region Constructors

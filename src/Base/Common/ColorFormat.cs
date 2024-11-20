@@ -1,4 +1,4 @@
-﻿namespace Fusee.Base.Common
+namespace Fusee.Base.Common
 {
     /// <summary>
     /// ColorFormat information in enum representation. Entries are hints for Color channel encoding.
@@ -59,5 +59,17 @@
         /// RGBA int, 32bit.
         /// </summary>
         iRGBA32,
+
+        /// <summary>
+        /// SLIRP
+        /// BGRA, 32bit.
+        /// </summary>
+        //BGRA,
+
+        /// <summary>
+        /// SLIRP
+        /// YUV 420, 32bit.
+        /// </summary>
+        //YUV420,
     }
 }

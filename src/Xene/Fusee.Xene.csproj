@@ -6,6 +6,7 @@
 
 		<IsPackable>true</IsPackable>
 		<Description>Fusee Xene</Description>
+		<Platforms>AnyCPU;x64</Platforms>
 	</PropertyGroup>
 
 	<ItemGroup>

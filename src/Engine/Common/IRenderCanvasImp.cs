@@ -135,6 +135,7 @@ namespace Fusee.Engine.Common
         /// </summary>
         public void DoRender();
 
+
         /// <summary>
         /// Does the resize on this instance.
         /// </summary>

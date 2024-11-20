@@ -24,7 +24,8 @@ namespace Fusee.Engine.Core
         ///     The canvas implementor.
         /// </value>
         [InjectMe]
-        public IRenderCanvasImp CanvasImplementor { set; get; }
+        public IRenderCanvasImp CanvasImplementor { 
+            set; get; }
 
         /// <summary>
         ///     Gets and sets the RenderContext implementor.
@@ -60,10 +61,6 @@ namespace Fusee.Engine.Core
         ///     Use the render context (<see cref="RenderContext" />) to fill the render canvas with 3d contents.
         /// </value>
         public RenderContext RC { get; private set; }
-
-        #endregion
-
-        #region Constructors
 
         #endregion
 
@@ -242,6 +239,7 @@ namespace Fusee.Engine.Core
                 Resize(e);
             };
         }
+
 
         /// <summary>
         ///     Callback method to invoke user code for updating a frame.

@@ -1,4 +1,5 @@
 ﻿using Fusee.Base.Common;
+using Fusee.Engine.Common;
 using Fusee.Engine.Core;
 using Fusee.Engine.Core.Scene;
 using Fusee.Math.Core;
@@ -15,7 +16,12 @@ namespace Fusee.Examples.PointCloudPotree2.Core
     {
         public bool RenderToTexture { get; set; }
 
-        public WritableTexture RenderTexture { get; private set; }
+        public WritableTexture RenderTexture
+        {
+            get; 
+            // SLIRP
+            set;
+        }
 
         public bool ClosingRequested
         {
@@ -51,6 +57,11 @@ namespace Fusee.Examples.PointCloudPotree2.Core
         private PotreeData _potreeData;
 
         private readonly RenderContext _rc;
+
+        //Expose camera to use it in SLIRP
+        public Camera MainCamera => _cam;
+        public Transform MainCameraTransform => _camTransform;
+        public SceneNode MainCameraNode => _camNode;
 
         public void OnLoadNewFile(object sender, EventArgs e)
         {
@@ -111,8 +122,9 @@ namespace Fusee.Examples.PointCloudPotree2.Core
 
             _cam = new(ProjectionMethod.Perspective, ZNear, ZFar, _fovy)
             {
-                BackgroundColor = float4.One,
-                RenderTexture = RenderTexture
+                //SLIRP
+                BackgroundColor = float4.Zero,
+                //RenderTexture = RenderTexture
             };
 
             _camNode = new SceneNode()
@@ -199,6 +211,9 @@ namespace Fusee.Examples.PointCloudPotree2.Core
                 OocLoader.IsUserMoving = false;*/
             //--------------------------------------------------------------------------------------------
 
+            // SLIRP
+            // in SLIRP we take the input from the SLIRP Client
+            /*
             // Mouse and keyboard movement
             if (Input.Keyboard.LeftRightAxis != 0 || Input.Keyboard.UpDownAxis != 0)
                 _keys = true;
@@ -225,8 +240,10 @@ namespace Fusee.Examples.PointCloudPotree2.Core
             _angleVert += _angleVelVert;
             _angleVelHorz = 0;
             _angleVelVert = 0;
-
+            
             _camTransform.FpsView(_angleHorz, _angleVert, Input.Keyboard.WSAxis, Input.Keyboard.ADAxis, Time.DeltaTimeUpdate * 20);
+            ´*/
+
         }
 
         private void OnThresholdChanged(int newValue)
