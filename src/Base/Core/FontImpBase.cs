@@ -55,64 +55,16 @@ namespace Fusee.Base.Core
         }
 
         /// <summary>
-        /// Returns the glyph curve from a given char
-        /// </summary>
-        /// <param name="c"></param>
-        public Curve GetGlyphCurve(uint c)
-        {
-            var curve = new Curve
-            {
-                CurveParts = new List<CurvePart>()
-            };
-
-            // don't print space
-            if (c == 32)
-            {
-                return curve;
-            }
-
-            var glyph = _font.GetGlyphs(new CodePoint(c), ColorFontSupport.None).First();
-            var outline = ((TrueTypeGlyphMetrics)glyph.GlyphMetrics).GetOutline();
-
-            var orgPointCoords = outline.ControlPoints.ToArray();
-            var pointTags = outline.OnCurves.ToArray().Select(x => x ? (byte)1 : (byte)0).ToArray();
-            if (orgPointCoords == null) return curve;
-
-            // Freetype contours are defined by their end points.
-            var curvePartEndPoints = outline.EndPoints.ToArray().Select(x => (short)x).ToArray();
-
-            var partTags = new List<byte>();
-            var partVerts = new List<float3>();
-
-            //Writes points of a freetype contour into a CurvePart,
-            for (var i = 0; i <= orgPointCoords.Length; i++)
-            {
-                //If a certain index of outline points is in array of contour end points - create new CurvePart and add it to Curve.CurveParts
-                if (!curvePartEndPoints.ToList().Contains((short)i)) continue;
-
-                partVerts.Clear();
-                partTags.Clear();
-
-                var part = SplitToCurvePartHelper.CreateCurvePart(orgPointCoords, pointTags, curvePartEndPoints, i,
-                    partVerts, partTags);
-                curve.CurveParts.Add(part);
-
-                var segments = SplitToCurveSegmentHelper.SplitPartIntoSegments(part, partTags, partVerts);
-                SplitToCurveSegmentHelper.CombineCurveSegmentsAndAddThemToCurvePart(segments, part);
-            }
-
-            return curve;
-
-        }
-
-        /// <summary>
         /// Get glyph info from letter
         /// </summary>
         /// <param name="c">letter char</param>
         /// <returns></returns>
         public GlyphInfo GetGlyphInfo(uint c)
         {
-            var glyph = _font.GetGlyphs(new CodePoint(c), ColorFontSupport.None).First();
+            _font.TryGetGlyphs(new CodePoint(c), ColorFontSupport.None, out var glyphs);
+            if (glyphs == null)
+                throw new NullReferenceException(nameof(glyphs));
+            var glyph = glyphs.First();
 
             var scaledPointSize = _font.Size * Dpi;
             var scaleFactorX = scaledPointSize / glyph.GlyphMetrics.ScaleFactor.X;
@@ -150,7 +102,10 @@ namespace Fusee.Base.Core
         /// <returns></returns>
         public float GetUnscaledAdvance(uint c)
         {
-            var glyphs = _font.GetGlyphs(new CodePoint(c), ColorFontSupport.None);
+            _font.TryGetGlyphs(new CodePoint(c), ColorFontSupport.None, out var glyphs);
+            if (glyphs == null)
+                throw new NullReferenceException(nameof(glyphs));
+            var glyph = glyphs.First();
             return glyphs.First().GlyphMetrics.AdvanceWidth;
         }
 
@@ -162,8 +117,6 @@ namespace Fusee.Base.Core
         /// <returns></returns>
         public float GetUnscaledKerning(uint leftC, uint rightC)
         {
-            var glyphLeft = _font.GetGlyphs(new CodePoint(leftC), ColorFontSupport.None).First();
-            var glyphRight = _font.GetGlyphs(new CodePoint(rightC), ColorFontSupport.None).First();
             return 0;
         }
 

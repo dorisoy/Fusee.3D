@@ -60,6 +60,19 @@ namespace Fusee.Engine.Common
         void DisableDepthClamp();
 
         /// <summary>
+        /// Retrieve pixels from bound framebuffer
+        /// </summary>
+        /// <param name="x">x pixel position</param>
+        /// <param name="y">y pixel position</param>
+        /// <param name="pixelFormat">format to retrieve, this has to match the current bound FBO!</param>
+        /// <param name="width">how many pixel in x direction</param>
+        /// <param name="height">how many pixel in y direction</param>
+        /// <returns><see cref="ReadOnlySpan{T}"/> with pixel content</returns>
+        /// <remarks>Does usually not throw on error (e. g. wrong pixel format, out of bounds, etc), uses GL.GetError() to retrieve
+        /// potential error</remarks>
+        public ReadOnlySpan<byte> ReadPixels(int x, int y, ImagePixelFormat pixelFormat, int width, int height);
+
+        /// <summary>
         /// Creates a shader object from vertex shader source code and pixel shader source code.
         /// </summary>
         /// <param name="vs">A string containing the vertex shader source.</param>
@@ -71,14 +84,14 @@ namespace Fusee.Engine.Common
         /// The result is already compiled to code executable on the GPU. <see cref="IRenderContextImp.SetShader"/>
         /// to activate the result as the current shader used for rendering geometry passed to the RenderContext.
         /// </remarks>
-        IShaderHandle CreateShaderProgram(string vs, string ps, string gs = null);
+        IShaderHandle CreateShaderProgram(string vs, string ps, string? gs = null);
 
         /// <summary>
         /// Creates a shader object from compute shader source code.
         /// </summary>
         /// <param name="cs">A string containing the compute shader source.</param>
         /// <returns></returns>
-        IShaderHandle CreateShaderProgramCompute(string cs = null);
+        IShaderHandle CreateShaderProgramCompute(string? cs = null);
 
         /// <summary>
         /// Removes given shader program from GPU
@@ -469,7 +482,7 @@ namespace Fusee.Engine.Common
         /// </summary>
         /// <param name="instanceImp">The <see cref="IInstanceDataImp"/> instance.</param>
         /// <param name="instanceColors">The instance colors.</param>
-        public void SetInstanceColor(IInstanceDataImp instanceImp, float4[] instanceColors);
+        public void SetInstanceColor(IInstanceDataImp instanceImp, uint[] instanceColors);
 
         /// <summary>
         /// Binds the tangents onto the GL render context and assigns an TangentBuffer index to the passed <see cref="IMeshImp" /> instance.
@@ -688,7 +701,7 @@ namespace Fusee.Engine.Common
         /// Passes geometry to be pushed through the rendering pipeline. <see cref="IMeshImp"/> for a description how geometry is made up.
         /// The geometry is transformed and rendered by the currently active shader program.
         /// </remarks>
-        void Render(IMeshImp mr, IInstanceDataImp instanceData = null);
+        void Render(IMeshImp mr, IInstanceDataImp? instanceData = null);
 
         /// <summary>
         /// Launch the bound Compute Shader Program.
@@ -890,6 +903,11 @@ namespace Fusee.Engine.Common
         /// <summary>
         /// Relates to OpenGl GL_PATCHES.
         /// </summary>
-        Patches
+        Patches,
+
+        /// <summary>
+        /// Relates to OpenGl GL_LINES_ADJACENCY.
+        /// </summary>
+        LineAdjacency
     }
 }

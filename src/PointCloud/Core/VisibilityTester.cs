@@ -1,3 +1,4 @@
+using CommunityToolkit.Diagnostics;
 using Fusee.Engine.Core;
 using Fusee.Math.Core;
 using Fusee.PointCloud.Common;
@@ -49,7 +50,7 @@ namespace Fusee.PointCloud.Core
         /// <summary>
         /// Current camera frustum - set by the SceneRenderer if a PointCloud Component is visited.
         /// </summary>
-        public FrustumF RenderFrustum { get; set; }
+        public FrustumF? RenderFrustum { get; set; }
 
         /// <summary>
         /// The octree structure of the point cloud.
@@ -74,8 +75,12 @@ namespace Fusee.PointCloud.Core
             set
             {
                 _minProjSizeModifier = value;
-                if (((PointCloudOctree)Octree).Root != null)
-                    _minScreenProjectedSize = ((PointCloudOctant)Octree.Root).ProjectedScreenSize * _minProjSizeModifier;
+
+                if (Octree is IPointCloudOctree pointCloudOctree)
+                {
+                    if (pointCloudOctree.Root != null)
+                        _minScreenProjectedSize = (pointCloudOctree.Root).ProjectedScreenSize * _minProjSizeModifier;
+                }
             }
         }
 
@@ -89,11 +94,11 @@ namespace Fusee.PointCloud.Core
         /// </summary>
         public float UpdateRate { get; set; } = 1 / 30f;
 
-        // Minimal screen projected size of a node. Depends on spacing of the octree.
+        // Minimal screen projected size of a node.
         private double _minScreenProjectedSize;
 
         // Allows traversal in order of screen projected size.
-        private readonly SortedDictionary<double, PointCloudOctant> _visibleNodesOrderedByProjectionSize;
+        private readonly SortedDictionary<double, IPointCloudOctant> _visibleNodesOrderedByProjectionSize;
 
         private double3 _camPosD;
         private float _minProjSizeModifier = 0.1f;
@@ -107,7 +112,7 @@ namespace Fusee.PointCloud.Core
         /// <param name="tryAddPointsToCacheHandler">Inject a method that loads the points and adds the loaded points in to cache, if needed.</param>
         public VisibilityTester(IPointCloudOctree octree, TriggerPointLoading tryAddPointsToCacheHandler)
         {
-            _visibleNodesOrderedByProjectionSize = new SortedDictionary<double, PointCloudOctant>();
+            _visibleNodesOrderedByProjectionSize = new SortedDictionary<double, IPointCloudOctant>();
             var numberOfNodes = ((int)System.Math.Pow(8, octree.Depth + 1) - 1) / 7 - 1;
             VisibleNodes = new(numberOfNodes / 4);
             Octree = octree;
@@ -140,7 +145,7 @@ namespace Fusee.PointCloud.Core
             NumberOfVisiblePoints = 0;
             _visibleNodesOrderedByProjectionSize.Clear();
             VisibleNodes.Clear();
-            DetermineVisibilityForNode((PointCloudOctant)Octree.Root);
+            DetermineVisibilityForNode(Octree.Root);
 
             while (_visibleNodesOrderedByProjectionSize.Count > 0 && NumberOfVisiblePoints <= PointThreshold)
             {
@@ -148,28 +153,38 @@ namespace Fusee.PointCloud.Core
                 var kvp = _visibleNodesOrderedByProjectionSize.Last();
                 var octant = kvp.Value;
 
-                _triggerPointLoading(octant.OctId);
+                if (!octant.IsProxy)
+                {
+                    if (octant.Initialized)
+                    {
+                        NumberOfVisiblePoints += octant.NumberOfPointsInNode;
+                        _triggerPointLoading(octant.OctId);
+                        VisibleNodes.Add(octant.OctId);
+                    }
+                }
 
-                NumberOfVisiblePoints += octant.NumberOfPointsInNode;
-                VisibleNodes.Add(octant.OctId);
                 _visibleNodesOrderedByProjectionSize.Remove(kvp.Key);
                 DetermineVisibilityForChildren(kvp.Value);
             }
         }
 
-        private void DetermineVisibilityForChildren(PointCloudOctant node)
+        private void DetermineVisibilityForChildren(IPointCloudOctant node)
         {
+            //TODO: There seems to be a bug in the converter that marks all child nods as leaves. Uncomment this when the bug is fixed.
+            //if (node.IsLeaf)
+            //    return;
+
             // add child nodes to the heap of ordered nodes
             foreach (var child in node.Children)
             {
                 if (child == null)
                     continue;
 
-                DetermineVisibilityForNode((PointCloudOctant)child);
+                DetermineVisibilityForNode((IPointCloudOctant)child);
             }
         }
 
-        private void DetermineVisibilityForNode(PointCloudOctant node)
+        private void DetermineVisibilityForNode(IPointCloudOctant node)
         {
             var scale = float3.One; //Model.Scale()
             var translation = Model.Translation();
@@ -178,6 +193,7 @@ namespace Fusee.PointCloud.Core
 
             //If node does not intersect the viewing frustum or is smaller than the minimal projected size:
             //Return -> will not be added to _visibleNodesOrderedByProjectionSize -> traversal of this branch stops.
+            Guard.IsNotNull(RenderFrustum);
             if (!node.InsideOrIntersectingFrustum(RenderFrustum, translation, scale) || node.ProjectedScreenSize < _minScreenProjectedSize)
             {
                 node.IsVisible = false;
@@ -194,8 +210,8 @@ namespace Fusee.PointCloud.Core
 
         private void SetMinScreenProjectedSize(double3 camPos, float fov)
         {
-            ((PointCloudOctant)Octree.Root).ComputeScreenProjectedSize(camPos, ViewportHeight, fov, Model.Translation(), float3.One);
-            _minScreenProjectedSize = ((PointCloudOctant)Octree.Root).ProjectedScreenSize * _minProjSizeModifier;
+            Octree.Root.ComputeScreenProjectedSize(camPos, ViewportHeight, fov, Model.Translation(), float3.One);
+            _minScreenProjectedSize = Octree.Root.ProjectedScreenSize * _minProjSizeModifier;
         }
     }
 }

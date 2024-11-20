@@ -7,6 +7,7 @@ using OpenTK.Graphics;
 using OpenTK.Graphics.ES30;
 using OpenTK.Platform.Android;
 using System;
+using System.ComponentModel;
 using System.Diagnostics;
 using Uri = Android.Net.Uri;
 
@@ -272,8 +273,7 @@ namespace Fusee.Engine.Imp.Graphics.Android
         /// </summary>
         public void Run()
         {
-            if (_gameView != null)
-                _gameView.Run(30.0);
+            _gameView?.Run(30.0);
 
             Width = _gameView.Size.Width;
             Height = _gameView.Size.Height;
@@ -307,6 +307,11 @@ namespace Fusee.Engine.Imp.Graphics.Android
         /// Occurs when [resize].
         /// </summary>
         public event EventHandler<ResizeEventArgs> Resize;
+
+        /// <summary>
+        /// Occurs when [closing] - not wired, dummy impl.
+        /// </summary>
+        public event EventHandler<CancelEventArgs> Closing;
 
         #endregion Events
 
@@ -438,16 +443,12 @@ namespace Fusee.Engine.Imp.Graphics.Android
 
         protected override void OnResize(EventArgs e)
         {
-            if (_renderCanvasImp != null)
-            {
-                _renderCanvasImp.DoResize(Width, Height);
-            }
+            _renderCanvasImp?.DoResize(Width, Height);
         }
 
         protected override void OnUpdateFrame(FrameEventArgs e)
         {
-            if (_renderCanvasImp != null)
-                _renderCanvasImp.DoUpdate();
+            _renderCanvasImp?.DoUpdate();
         }
 
         protected override void OnRenderFrame(FrameEventArgs e)
@@ -455,11 +456,10 @@ namespace Fusee.Engine.Imp.Graphics.Android
             _deltaTime = _stopwatch.ElapsedMilliseconds / 1000.0f;
             _stopwatch.Restart();
 
-            if (_renderCanvasImp != null)
-                _renderCanvasImp.DoRender();
+            _renderCanvasImp?.DoRender();
         }
 
-        // This method is called every time the context needs to be recreated. 
+        // This method is called every time the context needs to be recreated.
         //Use it to set any egl-specific settings prior to context creation.
         protected override void CreateFrameBuffer()
         {

@@ -80,7 +80,6 @@ namespace Fusee.ImGuiImp.Desktop
             get { return GetType()?.FullName ?? "Fusee.DImGui.Desktop"; }
         }
 
-#pragma warning disable 0067
 
         /// <summary>
         /// Not supported on this driver. Mouse and keyboard are considered to be connected all the time.
@@ -94,7 +93,6 @@ namespace Fusee.ImGuiImp.Desktop
         /// </summary>
         public event EventHandler<NewDeviceImpConnectedArgs>? NewDeviceConnected;
 
-#pragma warning restore 0067
 
         private static readonly Dictionary<KeyCodes, ImGuiKey> _translateKeyCodeToImGuiKey = new()
         {
@@ -241,7 +239,6 @@ namespace Fusee.ImGuiImp.Desktop
         public static void UpdateImGuiInput(Vector2 scaleFactor)
         {
             var io = ImGui.GetIO();
-            io.ClearInputCharacters();
 
             io.AddMousePosEvent(Input.Mouse.X / scaleFactor.X, Input.Mouse.Y / scaleFactor.Y);
             io.AddMouseButtonEvent((int)ImGuiMouseButton.Left, Input.Mouse.LeftButton);

@@ -57,12 +57,12 @@ namespace Fusee.Examples.PointCloudPotree2.Gui
             _fuControl.Init();
             await base.InitAsync();
 
-            _picker = new ImGuiFilePicker(Path.Combine(Environment.CurrentDirectory, ""), false, ".json");
+            _picker = new ImGuiFilePicker(new DirectoryInfo(Environment.CurrentDirectory), ".json");
             _picker.OnPicked += (s, file) =>
             {
-                if (string.IsNullOrEmpty(file)) return;
+                if (file == null || !file.Exists) return;
 
-                PointRenderingParams.Instance.PathToOocFile = new FileInfo(file).Directory.FullName;
+                PointRenderingParams.Instance.PathToOocFile = file.DirectoryName;
 
                 if (_fuControl != null)
                 {
@@ -135,7 +135,7 @@ namespace Fusee.Examples.PointCloudPotree2.Gui
 
             // Using a Child allow to fill all the space of the window.
             // It also allows customization
-            ImGui.BeginChild("GameRender", size, true, ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove);
+            ImGui.BeginChild("GameRender", size, ImGuiChildFlags.None, ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove);
 
             var fuseeViewportMin = ImGui.GetWindowContentRegionMin();
             var fuseeViewportMax = ImGui.GetWindowContentRegionMax();
@@ -372,7 +372,7 @@ namespace Fusee.Examples.PointCloudPotree2.Gui
             colors[(int)ImGuiCol.HeaderActive] = new Vector4(0.71f, 0.78f, 0.69f, 1.00f);
             colors[(int)ImGuiCol.Tab] = new Vector4(0.39f, 0.39f, 0.39f, 1.00f);
             colors[(int)ImGuiCol.TabHovered] = new Vector4(0.26f, 0.59f, 0.98f, 0.78f);
-            colors[(int)ImGuiCol.TabActive] = new Vector4(0.26f, 0.59f, 0.98f, 1.00f);
+            colors[(int)ImGuiCol.TabSelected] = new Vector4(0.26f, 0.59f, 0.98f, 1.00f);
             colors[(int)ImGuiCol.Separator] = new Vector4(0.39f, 0.39f, 0.39f, 1.00f);
             colors[(int)ImGuiCol.SeparatorHovered] = new Vector4(0.14f, 0.44f, 0.80f, 0.78f);
             colors[(int)ImGuiCol.SeparatorActive] = new Vector4(0.14f, 0.44f, 0.80f, 1.00f);

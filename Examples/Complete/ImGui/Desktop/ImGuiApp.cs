@@ -117,7 +117,7 @@ namespace Fusee.Examples.FuseeImGui.Desktop
 
             // Using a Child allow to fill all the space of the window.
             // It also allows customization
-            ImGui.BeginChild("GameRender", size, true, ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove);
+            ImGui.BeginChild("GameRender", size, ImGuiChildFlags.None, ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove);
 
             var fuseeViewportMin = ImGui.GetWindowContentRegionMin();
             var fuseeViewportMax = ImGui.GetWindowContentRegionMax();
@@ -158,31 +158,32 @@ namespace Fusee.Examples.FuseeImGui.Desktop
 
 
             ImGui.Text("SceneGraph");
-            ImGui.BeginTable("SceneGraph", 3, ImGuiTableFlags.Resizable | ImGuiTableFlags.SizingMask | ImGuiTableFlags.Borders);
-
-            ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.DefaultSort, 50);
-            ImGui.TableSetupColumn("Type", ImGuiTableColumnFlags.DefaultSort, 100);
-            ImGui.TableSetupColumn("Value", ImGuiTableColumnFlags.DefaultSort, 500);
-
-            ImGui.TableHeadersRow();
-
-            foreach (var element in allSceneElements)
+            if (ImGui.BeginTable("SceneGraph", 3, ImGuiTableFlags.Resizable | ImGuiTableFlags.SizingMask | ImGuiTableFlags.Borders))
             {
-                ImGui.TableNextColumn();
-                ImGui.Text(element.Name);
-                ImGui.TableNextColumn();
-                ImGui.Text(element.Type.FullName);
-                ImGui.TableNextColumn();
-                ImGui.Text(element.Value);
-                ImGui.TableNextRow();
+
+                ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.DefaultSort, 50);
+                ImGui.TableSetupColumn("Type", ImGuiTableColumnFlags.DefaultSort, 100);
+                ImGui.TableSetupColumn("Value", ImGuiTableColumnFlags.DefaultSort, 500);
+
+                ImGui.TableHeadersRow();
+
+                foreach (var element in allSceneElements)
+                {
+                    ImGui.TableNextColumn();
+                    ImGui.Text(element.Name);
+                    ImGui.TableNextColumn();
+                    ImGui.Text(element.Type.FullName);
+                    ImGui.TableNextColumn();
+                    ImGui.Text(element.Value);
+                    ImGui.TableNextRow();
+                }
+                ImGui.EndTable();
             }
-            ImGui.EndTable();
 
             ImGui.Spacing();
             ImGui.Spacing();
             ImGui.Spacing();
             ImGui.Separator();
-
 
             ImGui.BeginGroup();
 
@@ -305,7 +306,7 @@ namespace Fusee.Examples.FuseeImGui.Desktop
             colors[(int)ImGuiCol.HeaderActive] = new Vector4(0.71f, 0.78f, 0.69f, 1.00f);
             colors[(int)ImGuiCol.Tab] = new Vector4(0.39f, 0.39f, 0.39f, 1.00f);
             colors[(int)ImGuiCol.TabHovered] = new Vector4(0.26f, 0.59f, 0.98f, 0.78f);
-            colors[(int)ImGuiCol.TabActive] = new Vector4(0.26f, 0.59f, 0.98f, 1.00f);
+            colors[(int)ImGuiCol.TabSelected] = new Vector4(0.26f, 0.59f, 0.98f, 1.00f);
             colors[(int)ImGuiCol.Separator] = new Vector4(0.39f, 0.39f, 0.39f, 1.00f);
             colors[(int)ImGuiCol.SeparatorHovered] = new Vector4(0.14f, 0.44f, 0.80f, 0.78f);
             colors[(int)ImGuiCol.SeparatorActive] = new Vector4(0.14f, 0.44f, 0.80f, 1.00f);
