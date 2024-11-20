@@ -1,3 +1,4 @@
+using Fusee.Base.Common;
 using Fusee.Base.Core;
 using Fusee.Engine.Common;
 using Fusee.Engine.Core.Effects;
@@ -768,6 +769,15 @@ namespace Fusee.Engine.Core
         /// Global Uniform array of <see cref="LightResult"/>s. Updated by a SceneRenderer.
         /// </summary>
         public LightResult[] ForwardLights = new LightResult[ModuleExtensionPoint.NumberOfLightsForward];
+
+        /// <summary>
+        /// Render meshes even if <see cref="Mesh.HasDirtyIndices"/> is <see langword="true"/>.
+        /// If <see langword="false"/> all meshes are guaranted to have valid and up-to-date values each frame.
+        /// Usually this is not necessary, however if there is caching and/or visibility testing on a mesh level involved
+        /// we want to ensure the data validity of each frame.
+        /// </summary>
+        public bool AllowDirtyMeshs { get; set; } = true;
+
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RenderContext"/> class.
@@ -1745,6 +1755,23 @@ namespace Fusee.Engine.Core
             _rci.DisableDepthClamp();
         }
 
+
+        /// <summary>
+        /// Retrieve pixels from bound framebuffer
+        /// </summary>
+        /// <param name="x">x pixel position</param>
+        /// <param name="y">y pixel position</param>
+        /// <param name="pixelFormat">format to retrieve, this has to match the current bound FBO!</param>
+        /// <param name="width">how many pixel in x direction</param>
+        /// <param name="height">how many pixel in y direction</param>
+        /// <returns><see cref="ReadOnlySpan{T}"/> with pixel content</returns>
+        /// <remarks>Does usually not throw on error (e. g. wrong pixel format, out of bounds, etc), uses GL.GetError() to retrieve
+        /// potential error</remarks>
+        public ReadOnlySpan<byte> ReadPixels(int x, int y, ImagePixelFormat pixelFormat, int width, int height)
+        {
+            return _rci.ReadPixels(x, y, pixelFormat, width, height);
+        }
+
         /// <summary>
         /// Returns the hardware capabilities.
         /// </summary>
@@ -1908,7 +1935,7 @@ namespace Fusee.Engine.Core
         ///  Renders into the given texture.
         /// </summary>
         /// <param name="tex">The render texture.</param>
-        public void SetRenderTarget(IWritableTexture tex)
+        public void SetRenderTarget(IWritableTexture? tex)
         {
             if (tex == null)
                 SetRenderTarget();
@@ -2003,6 +2030,14 @@ namespace Fusee.Engine.Core
             UpdateAllActiveFxParams(cFx);
 
             var meshImp = _meshManager.GetImpFromMesh(mesh);
+
+            // The dirty index functionality works after the initial call to the MeshManager
+            // This is therefore the first possible place to catch und discard (pointcloud)-meshes with a dirty index
+            if (!AllowDirtyMeshs && mesh != null && mesh.HasDirtyIndices)
+            {
+                return;
+            }
+
             if (instanceData != null)
             {
                 var instanceDataImp = _meshManager.GetImpFromInstanceData(mesh, instanceData);
