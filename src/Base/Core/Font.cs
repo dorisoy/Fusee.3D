@@ -66,24 +66,6 @@ namespace Fusee.Base.Core
             return ret;
         }
 
-
-        /// <summary>
-        /// Gets the character's points, contours and tags and translates them into a curve.
-        /// </summary>
-        /// <param name="c">The character from which the information is to be read.</param>
-        /// <returns></returns>
-        public Curve GetGlyphCurve(uint c)
-        {
-            if (_glyphCurveChache.TryGetValue(c, out Curve curve))
-                return curve;
-
-            // its not in the cache...
-            curve = _fontImp.GetGlyphCurve(c);
-            _glyphCurveChache[c] = curve;
-            return curve;
-        }
-
-
         /// <summary>
         /// Get the unscaled advance from a character.
         /// </summary>

@@ -34,7 +34,7 @@ namespace Fusee.Base.Imp.Desktop
             try
             {
                 //Load the image
-                using var image = Image.Load(file, out var imgFormat);
+                using var image = Image.Load(file);
 
                 //ImageSharp loads from the top-left pixel, whereas OpenGL loads from the bottom-left, causing the texture to be flipped vertically.
                 //This will correct that, making the texture display properly.
@@ -46,7 +46,6 @@ namespace Fusee.Base.Imp.Desktop
                 var pixels = new byte[bytesPerPixel * image.Width * image.Height];
 
                 ImageData img;
-
                 switch (bitsPerPixel)
                 {
                     case 16:

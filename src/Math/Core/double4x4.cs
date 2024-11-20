@@ -1,3 +1,4 @@
+using Newtonsoft.Json;
 using ProtoBuf;
 using System;
 using System.Globalization;
@@ -44,6 +45,7 @@ namespace Fusee.Math.Core
     /// of methods are postfixed with "RH".
     /// </para>
     /// </remarks>
+    [JsonObject(MemberSerialization = MemberSerialization.OptIn)]
     [ProtoContract]
     [StructLayout(LayoutKind.Sequential)]
     public struct double4x4 : IEquatable<double4x4>
@@ -53,24 +55,28 @@ namespace Fusee.Math.Core
         /// <summary>
         /// Top row of the matrix
         /// </summary>
+        [JsonProperty(PropertyName = "Row1")]
         [ProtoMember(1)]
         public double4 Row1;
 
         /// <summary>
         /// 2nd row of the matrix
         /// </summary>
+        [JsonProperty(PropertyName = "Row2")]
         [ProtoMember(2)]
         public double4 Row2;
 
         /// <summary>
         /// 3rd row of the matrix
         /// </summary>
+        [JsonProperty(PropertyName = "Row3")]
         [ProtoMember(3)]
         public double4 Row3;
 
         /// <summary>
         /// Bottom row of the matrix
         /// </summary>
+        [JsonProperty(PropertyName = "Row4")]
         [ProtoMember(4)]
         public double4 Row4;
 
@@ -1532,7 +1538,7 @@ namespace Fusee.Math.Core
         /// <summary>
         /// Checks if this matrix is invertible.
         /// </summary>
-        /// <param name="mat">The matrix.</param>       
+        /// <param name="mat">The matrix.</param>
         public static bool IsInvertable(double4x4 mat)
         {
             return mat.Determinant != 0;
@@ -1542,7 +1548,7 @@ namespace Fusee.Math.Core
         /// Checks if this matrix is invertible.
         /// </summary>
         /// <param name="mat">The matrix.</param>
-        /// <param name="det">The determinant of the matrix.</param>       
+        /// <param name="det">The determinant of the matrix.</param>
         public static bool IsInvertable(double4x4 mat, out double det)
         {
             det = mat.Determinant;
@@ -1901,7 +1907,7 @@ namespace Fusee.Math.Core
 
         #endregion Transpose
 
-        #region Transform        
+        #region Transform
 
         /// <summary>
         /// Transforms a given vector by a matrix via matrix*vector (Postmultiplication of the vector).
@@ -2405,7 +2411,7 @@ namespace Fusee.Math.Core
 
         /// <summary>
         /// Checks whether row three (the projection part) of the matrix is equal to (0, 0, 0, 1). If this is the case the matrix is affine.
-        /// </summary>       
+        /// </summary>
         public bool IsAffine =>
                 // Column order notation
                 (Row4 == double4.UnitW);

@@ -30,25 +30,25 @@ namespace Fusee.Engine.Core.Scene
     [DebuggerDisplay("{Name,nq}, {(Components==null)? \"No\" : Components.Count.ToString(),nq} components, {(Children==null)? \"No\" : Children.Count.ToString(),nq} children")]
     public class SceneNode : Xene.INode
     {
-        private ChildList _children;
+        private ChildList _children = new();
 
         /// <summary>
         /// The name.
         /// </summary>
-        public string Name;
+        public string? Name;
 
         /// <summary>
         /// The components this node is made of.
-        /// </summary>           
+        /// </summary>
         public List<SceneComponent> Components;
 
         /// <summary>
-        /// This SceneNodeContainer's snc. 
+        /// This SceneNodeContainer's snc.
         /// </summary>
-        public SceneNode Parent;
+        public SceneNode? Parent;
 
         /// <summary>
-        /// Creates a new instance of this SceneNode class. 
+        /// Creates a new instance of this SceneNode class.
         /// </summary>
         public SceneNode()
         {
@@ -57,8 +57,8 @@ namespace Fusee.Engine.Core.Scene
         }
 
         /// <summary>
-        /// Possible children. 
-        /// </summary>         
+        /// Possible children.
+        /// </summary>
         public ChildList Children
         {
             get => _children;

@@ -1,7 +1,9 @@
+using CommunityToolkit.Diagnostics;
 using Fusee.Base.Common;
 using Fusee.Base.Core;
 using Fusee.Engine.Common;
 using System;
+using System.ComponentModel;
 using System.Threading.Tasks;
 
 namespace Fusee.Engine.Core
@@ -24,7 +26,7 @@ namespace Fusee.Engine.Core
         ///     The canvas implementor.
         /// </value>
         [InjectMe]
-        public IRenderCanvasImp CanvasImplementor { set; get; }
+        public IRenderCanvasImp? CanvasImplementor { set; get; }
 
         /// <summary>
         ///     Gets and sets the RenderContext implementor.
@@ -33,7 +35,7 @@ namespace Fusee.Engine.Core
         ///     The context implementor.
         /// </value>
         [InjectMe]
-        public IRenderContextImp ContextImplementor { set; get; }
+        public IRenderContextImp? ContextImplementor { set; get; }
 
         /// <summary>
         ///     Gets and sets the input driver implementor.
@@ -42,7 +44,7 @@ namespace Fusee.Engine.Core
         ///     The input driver implementor.
         /// </value>
         [InjectMe]
-        public IInputDriverImp InputDriverImplementor { set; get; }
+        public IInputDriverImp? InputDriverImplementor { set; get; }
 
         /// <summary>
         ///     Gets and sets the video manager implementor.
@@ -51,7 +53,7 @@ namespace Fusee.Engine.Core
         ///     The video manager implementor.
         /// </value>
         [InjectMe]
-        public IVideoManagerImp VideoManagerImplementor { set; get; }
+        public IVideoManagerImp? VideoManagerImplementor { set; get; }
 
         /// <summary>
         ///     Returns the render context object.
@@ -59,7 +61,7 @@ namespace Fusee.Engine.Core
         /// <value>
         ///     Use the render context (<see cref="RenderContext" />) to fill the render canvas with 3d contents.
         /// </value>
-        public RenderContext RC { get; private set; }
+        public RenderContext? RC { get; private set; }
 
         #endregion
 
@@ -72,7 +74,7 @@ namespace Fusee.Engine.Core
         /// <summary>
         /// Used to inject functionality that is meant to be executed when the application is shutting down.
         /// </summary>
-        public event EventHandler? ApplicationIsShuttingDown;
+        public event EventHandler<CancelEventArgs>? ApplicationIsShuttingDown;
 
         /// <summary>
         /// Used to inject functionality that is meant to execute at the end of each frame. E.g. if components of the SceneGraph need to be changed.
@@ -90,8 +92,7 @@ namespace Fusee.Engine.Core
             private set
             {
                 _isShuttingDown = value;
-                if (_isShuttingDown)
-                    ApplicationIsShuttingDown?.Invoke(this, new EventArgs());
+
             }
         }
         private bool _isShuttingDown;
@@ -108,6 +109,7 @@ namespace Fusee.Engine.Core
             if (attributes.Length > 0)
             {
                 var fae = (FuseeApplicationAttribute)attributes[0];
+                Guard.IsNotNull(fae.Name);
                 return fae.Name;
             }
             return GetType().Name;
@@ -152,7 +154,7 @@ namespace Fusee.Engine.Core
         /// <summary>
         /// This event is usually triggered when loading is completed (after init() method)
         /// </summary>
-        public EventHandler<EventArgs> LoadingCompleted;
+        public EventHandler<EventArgs?>? LoadingCompleted;
 
         /// <summary>
         /// Called after <see cref="RenderCanvas.Init"/> can be used to await async tasks (e.g. loading methods)
@@ -191,6 +193,12 @@ namespace Fusee.Engine.Core
 
             VideoManager.Instance.VideoManagerImp = VideoManagerImplementor;
 
+            CanvasImplementor.Closing += (s, e) =>
+            {
+                ApplicationIsShuttingDown?.Invoke(this, e);
+                IsShuttingDown = !e.Cancel; // only set shutdown if not canceled
+            };
+
             CanvasImplementor.Init += async delegate
             {
                 Init();
@@ -222,11 +230,13 @@ namespace Fusee.Engine.Core
                 // pre-rendering
                 Time.Instance.DeltaTimeIncrement = CanvasImplementor.DeltaTime;
 
+                // update all meshes (changed values like position, normals, etc.) before rendering them
+                RC.UpdateAllMeshes();
+
                 // rendering
                 if (Width != 0 || Height != 0)
                     RenderAFrame();
 
-                RC.UpdateAllMeshes();
                 RC.CleanupResourceManagers();
 
                 EndOfFrame?.Invoke(this, EventArgs.Empty);
