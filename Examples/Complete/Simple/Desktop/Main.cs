@@ -52,6 +52,7 @@ namespace Fusee.Examples.Simple.Desktop
 
             AssetStorage.RegisterProvider(fap);
 
+
             var app = new Core.Simple();
 
             // Inject Fusee.Engine InjectMe dependencies (hard coded)
