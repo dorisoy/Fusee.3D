@@ -1,4 +1,6 @@
-﻿using Fusee.Engine.Core.Scene;
+using CommunityToolkit.HighPerformance.Buffers;
+using Fusee.Base.Core;
+using Fusee.Engine.Core.Scene;
 using Fusee.Math.Core;
 using Fusee.PointCloud.Common;
 using Fusee.PointCloud.Core;
@@ -9,8 +11,13 @@ namespace Fusee.PointCloud.Potree
     /// <summary>
     /// Non-point-type-specific implementation of Potree2 clouds.
     /// </summary>
-    public class Potree2CloudInstanced : IPointCloudImp<InstanceData>
+    public class Potree2CloudInstanced : IPointCloudImp<InstanceData, VisualizationPoint>
     {
+        /// <summary>
+        /// Provides a dirty flag for the gpu data cache and a property changed handle for it.
+        /// </summary>
+        public InvalidateGpuDataCache InvalidateGpuDataCache { get; } = new();
+
         /// <summary>
         /// The complete list of meshes that can be rendered.
         /// </summary>
@@ -75,29 +82,40 @@ namespace Fusee.PointCloud.Potree
         /// <summary>
         /// The center of the point clouds AABB / Octree root.
         /// </summary>
-        public float3 Center => (float3)VisibilityTester.Octree.Root.Center;
+        public float3 Center { get; private set; }
 
         /// <summary>
         /// The size (longest edge) of the point clouds AABB / Octree root.
         /// </summary>
-        public float3 Size => new((float)VisibilityTester.Octree.Root.Size);
+        public float3 Size { get; private set; }
 
-        private readonly GetInstanceData _getInstanceData;
         private bool _doUpdate = true;
 
         /// <summary>
         /// Creates a new instance of type <see cref="PointCloud"/>
         /// </summary>
-        public Potree2CloudInstanced(PointCloudDataHandlerBase<InstanceData> dataHandler, IPointCloudOctree octree)
+        public Potree2CloudInstanced(PointCloudDataHandlerBase<InstanceData> dataHandler, IPointCloudOctree octree, float3 size, float3 center)
         {
-            GpuDataToRender = new List<InstanceData>();
+            GpuDataToRender = new();
             DataHandler = dataHandler;
+            DataHandler.UpdateGpuDataCache = UpdateGpuDataCache;
             VisibilityTester = new VisibilityTester(octree, dataHandler.TriggerPointLoading);
-            _getInstanceData = dataHandler.GetGpuData;
+            Size = size;
+            Center = center;
         }
 
         /// <summary>
-        /// Uses the <see cref="VisibilityTester"/> and <see cref="PointCloudDataHandler{TGpuData, TPoint}"/> to update the visible meshes.
+        /// Allows to update meshes with data from the points.
+        /// </summary>
+        /// <param name="meshes">The meshes that have to be updated.</param>
+        /// <param name="points">The points with the desired values.</param>
+        public void UpdateGpuDataCache(ref IEnumerable<InstanceData> meshes, MemoryOwner<VisualizationPoint> points)
+        {
+            Diagnostics.Warn("Not implemented. Cache will not be updated.");
+        }
+
+        /// <summary>
+        /// Uses the <see cref="VisibilityTester"/> and <see cref="PointCloudDataHandler{TGpuData}"/> to update the visible meshes.
         /// Called every frame.
         /// </summary>
         /// <param name="fov">The camera's field of view.</param>
@@ -129,7 +147,7 @@ namespace Fusee.PointCloud.Potree
             {
                 if (!guid.Valid) continue;
 
-                var instanceData = _getInstanceData(guid);
+                var instanceData = DataHandler.GetGpuData(guid, null);
 
                 if (instanceData == null) continue; //points for this octant aren't loaded yet.
 

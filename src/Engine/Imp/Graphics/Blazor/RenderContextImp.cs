@@ -20,11 +20,6 @@ namespace Fusee.Engine.Imp.Graphics.Blazor
     public class RenderContextImp : IRenderContextImp
     {
         /// <summary>
-        /// The WebGL rendering context base.
-        /// </summary>
-        protected WebGLRenderingContextBase gl;
-
-        /// <summary>
         /// The WebGL2 rendering context base.
         /// </summary>
         protected WebGL2RenderingContextBase gl2;
@@ -40,7 +35,6 @@ namespace Fusee.Engine.Imp.Graphics.Blazor
         private uint _blendDstAlpha;
 
         private bool _isCullEnabled;
-        private WebGLFramebuffer _lastBoundFbo;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RenderContextImp"/> class.
@@ -1227,34 +1221,23 @@ namespace Fusee.Engine.Imp.Graphics.Blazor
         /// </summary>
         /// <param name="instanceImp">The <see cref="InstanceDataImp"/>.</param>
         /// <param name="instanceColors">The colors of the instances.</param>
-        public void SetInstanceColor(IInstanceDataImp instanceImp, float4[] instanceColors)
+        public void SetInstanceColor(IInstanceDataImp instanceImp, uint[] instanceColors)
         {
             if (instanceColors == null)
                 return;
 
-            float[] colorsFlat = new float[instanceColors.Length * 4];
-            int i = 0;
-            foreach (float4 v in instanceColors)
-            {
-                colorsFlat[i] = v.x;
-                colorsFlat[i + 1] = v.y;
-                colorsFlat[i + 2] = v.z;
-                colorsFlat[i + 3] = v.w;
-                i += 4;
-            }
-
             int vboBytes;
-            int colsBytes = instanceColors.Length * 4 * sizeof(float);
+            int colsBytes = instanceColors.Length * sizeof(uint);
             if (((InstanceDataImp)instanceImp).InstanceColorBufferObject == null)
             {
                 ((InstanceDataImp)instanceImp).InstanceColorBufferObject = gl2.CreateBuffer();
                 gl2.BindBuffer(ARRAY_BUFFER, ((InstanceDataImp)instanceImp).InstanceColorBufferObject);
-                gl2.BufferData(ARRAY_BUFFER, colorsFlat, DYNAMIC_DRAW);
+                gl2.BufferData(ARRAY_BUFFER, instanceColors, DYNAMIC_DRAW);
             }
             else
             {
                 gl2.BindBuffer(ARRAY_BUFFER, ((InstanceDataImp)instanceImp).InstanceColorBufferObject);
-                gl2.BufferSubData(ARRAY_BUFFER, IntPtr.Zero, colorsFlat);
+                gl2.BufferSubData(ARRAY_BUFFER, IntPtr.Zero, instanceColors);
             }
 
             vboBytes = (int)gl2.GetBufferParameter(ARRAY_BUFFER, BUFFER_SIZE);
@@ -2678,6 +2661,33 @@ namespace Fusee.Engine.Imp.Graphics.Blazor
         #endregion
 
         #region Picking related Members
+
+        /// <summary>
+        /// Retrieve pixels from bound framebuffer
+        /// </summary>
+        /// <param name="x">x pixel position</param>
+        /// <param name="y">y pixel position</param>
+        /// <param name="pixelFormat">format to retrieve, this has to match the current bound FBO!</param>
+        /// <param name="width">how many pixel in x direction</param>
+        /// <param name="height">how many pixel in y direction</param>
+        /// <returns><see cref="ReadOnlySpan{T}"/> with pixel content</returns>
+        /// <remarks>Does usually not throw on error (e. g. wrong pixel format, out of bounds, etc), uses GL.GetError() to retrieve
+        /// potential error</remarks>
+        public ReadOnlySpan<byte> ReadPixels(int x, int y, ImagePixelFormat pixelFormat, int width, int height)
+        {
+            var format = GetTexturePixelInfo(pixelFormat);
+            var data = new byte[width * height * pixelFormat.BytesPerPixel];
+
+            gl2.ReadPixels(x, y, 1, 1, format.Format, format.PxType, data);
+
+            var err = gl2.GetError();
+            if (err != NO_ERROR)
+            {
+                throw new Exception($"ReadPixel failed with error code {err}!");
+            }
+
+            return data;
+        }
 
         /// <summary>
         /// Retrieves a sub-image of the given region.

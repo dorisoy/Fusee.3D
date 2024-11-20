@@ -1,18 +1,23 @@
-﻿using Fusee.Engine.Core.Scene;
+﻿using CommunityToolkit.HighPerformance.Buffers;
+using Fusee.Engine.Core.Scene;
 using Fusee.Math.Core;
 using Fusee.PointCloud.Common;
 using Fusee.PointCloud.Core;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Fusee.PointCloud.Potree
 {
     /// <summary>
     /// Non-point-type-specific implementation of Potree2 clouds.
     /// </summary>
-    public class Potree2CloudDynamic : IPointCloudImp<Mesh>
+    public class Potree2CloudDynamic : IPointCloudImp<Mesh, VisualizationPoint>
     {
+        /// <summary>
+        /// Object for handling the invalidation of the gpu data cache.
+        /// </summary>
+        public InvalidateGpuDataCache InvalidateGpuDataCache { get => DataHandler.InvalidateCacheToken; }
+
         /// <summary>
         /// The complete list of meshes that can be rendered.
         /// </summary>
@@ -77,39 +82,96 @@ namespace Fusee.PointCloud.Potree
         /// <summary>
         /// The center of the point clouds AABB / Octree root.
         /// </summary>
-        public float3 Center => (float3)VisibilityTester.Octree.Root.Center;
+        public float3 Center { get; private set; }
 
         /// <summary>
         /// The size (longest edge) of the point clouds AABB / Octree root.
         /// </summary>
-        public float3 Size => new((float)VisibilityTester.Octree.Root.Size);
+        public float3 Size { get; private set; }
 
-        private readonly GetDynamicMeshes _getMeshes;
+        /// <summary>
+        /// Action that is run on every mesh that is determined as newly visible.
+        /// </summary>
+        public Action<Mesh>? NewMeshAction
+        {
+            get => _newMeshAction;
+            set
+            {
+                _newMeshAction = value;
+                (DataHandler).NewMeshAction = _newMeshAction;
+            }
+        }
+        private Action<Mesh>? _newMeshAction;
+
+        /// <summary>
+        /// Action that is run on every mesh that was updated.
+        /// </summary>
+        public Action<Mesh>? UpdatedMeshAction
+        {
+            get => _updateMeshAction;
+            set
+            {
+                _updateMeshAction = value;
+                DataHandler.UpdatedMeshAction = _updateMeshAction;
+            }
+        }
+        private Action<Mesh>? _updateMeshAction;
+
         private bool _doUpdate = true;
 
         /// <summary>
         /// Creates a new instance of type <see cref="PointCloud"/>
         /// </summary>
-        public Potree2CloudDynamic(PointCloudDataHandlerBase<Mesh> dataHandler, IPointCloudOctree octree)
+        public Potree2CloudDynamic(PointCloudDataHandlerBase<Mesh> dataHandler, IPointCloudOctree octree, float3 size, float3 center)
         {
-            GpuDataToRender = new List<Mesh>();
+            GpuDataToRender = new();
             DataHandler = dataHandler;
+            DataHandler.UpdateGpuDataCache = UpdateGpuDataCache;
             VisibilityTester = new VisibilityTester(octree, dataHandler.TriggerPointLoading);
-            _getMeshes = dataHandler.GetGpuData;
+            Size = size;
+            Center = center;
         }
 
         /// <summary>
-        /// Action that is run on every mesh that is loaded to be visible.
+        /// Allows to update meshes with data from the points.
         /// </summary>
-        public Action<Mesh> NewMeshAction;
+        /// <param name="meshes">The meshes that have to be updated.</param>
+        /// <param name="points">The points with the desired values.</param>
+        public void UpdateGpuDataCache(ref IEnumerable<Mesh> meshes, MemoryOwner<VisualizationPoint> points)
+        {
+            var countStartSlice = 0;
+
+            foreach (var mesh in meshes)
+            {
+                if (mesh.Flags == null || mesh.Flags.Length == 0) continue;
+
+                if (countStartSlice + mesh.Flags.Length > points.Span.Length)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(points), "The slice range is outside the bounds of points span.");
+                }
+
+                mesh.Name = string.Empty;
+                var slice = points.Span.Slice(countStartSlice, mesh.Flags.Length);
+
+                for (int i = 0; i < slice.Length; i++)
+                {
+                    var pt = slice[i];
+                    if (mesh.Flags[i] != pt.Flags)
+                        mesh.Flags[i] = pt.Flags;
+                }
+                countStartSlice += mesh.Flags.Length;
+            }
+        }
 
         /// <summary>
-        /// Determins if new Meshes should be loaded.
+        /// Determines if new Meshes should be loaded.
         /// </summary>
         public bool LoadNewMeshes { get; set; } = true;
 
+        private List<OctantId> _visibleOctantsCache = new();
+
         /// <summary>
-        /// Uses the <see cref="VisibilityTester"/> and <see cref="PointCloudDataHandler{TGpuData, TPoint}"/> to update the visible meshes.
+        /// Uses the <see cref="VisibilityTester"/> and <see cref="PointCloudDataHandler{TGpuData}"/> to update the visible meshes.
         /// Called every frame.
         /// </summary>
         /// <param name="fov">The camera's field of view.</param>
@@ -137,35 +199,23 @@ namespace Fusee.PointCloud.Potree
             VisibilityTester.Model = modelMat;
 
             VisibilityTester.Update();
+            GpuDataToRender.Clear();
 
-            var meshes = new List<Mesh>();
+            var currentOctants = new List<OctantId>();
 
             foreach (var guid in VisibilityTester.VisibleNodes)
             {
                 if (!guid.Valid) continue;
 
-                var guidMeshes = _getMeshes(guid);
+                var guidMeshes = DataHandler.GetGpuData(guid, () => !_visibleOctantsCache.Contains(guid));
 
-                if (guidMeshes == null) continue; //points for this octant aren't loaded yet.
+                if (guidMeshes != null)
+                    GpuDataToRender.AddRange(guidMeshes);
 
-                meshes.AddRange(guidMeshes);
+                currentOctants.Add(guid);
             }
 
-            if (NewMeshAction != null)
-            {
-                var newMeshes = meshes.Except(GpuDataToRender);
-
-                if (newMeshes.Any())
-                {
-                    foreach (var mesh in newMeshes)
-                    {
-                        NewMeshAction(mesh);
-                    }
-                }
-            }
-
-            GpuDataToRender.Clear();
-            GpuDataToRender.AddRange(meshes);
+            _visibleOctantsCache = new(currentOctants);
         }
     }
 }

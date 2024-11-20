@@ -1,4 +1,7 @@
-﻿using Fusee.Math.Core;
+﻿using CommunityToolkit.Diagnostics;
+using Fusee.Math.Core;
+using Fusee.PointCloud.Common;
+using Newtonsoft.Json;
 using System;
 
 #pragma warning disable CS1591
@@ -11,10 +14,25 @@ namespace Fusee.PointCloud.Potree.V2.Data
         {
         }
 
-        public string Name = "";
+        [JsonIgnore]
+        private string? _name;
 
-        public AABBd Aabb { get; set; }
-        public PotreeNode Parent { get; set; }
+        public string? Name
+        {
+            get { return _name; }
+            set
+            {
+                Guard.IsNotNull(value);
+                _name = value;
+                OctantId = new OctantId(value);
+            }
+        }
+
+        [JsonIgnore]
+        public OctantId OctantId;
+
+        public AABBd Aabb { get; set; } = new();
+        public PotreeNode? Parent { get; set; }
         public PotreeNode[] Children = new PotreeNode[8];
         public NodeType NodeType = NodeType.UNSET;
         public long ByteOffset { get; set; }
@@ -23,9 +41,9 @@ namespace Fusee.PointCloud.Potree.V2.Data
 
         public bool IsLoaded = false;
 
-        public int Level()
+        public int? Level()
         {
-            return Name.Length - 1;
+            return Name?.Length - 1;
         }
 
         public void Traverse(Action<PotreeNode> callback)
@@ -34,10 +52,7 @@ namespace Fusee.PointCloud.Potree.V2.Data
 
             foreach (var child in Children)
             {
-                if (child != null)
-                {
-                    child.Traverse(callback);
-                }
+                child?.Traverse(callback);
             }
         }
     }

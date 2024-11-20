@@ -1,6 +1,7 @@
 using Fusee.Engine.Common;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 
 namespace Fusee.Xene
@@ -14,10 +15,41 @@ namespace Fusee.Xene
     {
     }
 
+    /// <summary>
+    /// Visit Node
+    /// </summary>
+    /// <typeparam name="TNode"></typeparam>
+    /// <typeparam name="TComponent"></typeparam>
+    /// <param name="visitor"></param>
+    /// <param name="node"></param>
     public delegate void VisitNodeMethod<TNode, TComponent>(Visitor<TNode, TComponent> visitor, TNode node) where TNode : class, INode where TComponent : class, IComponent;
+
+    /// <summary>
+    /// Visit Component
+    /// </summary>
+    /// <typeparam name="TNode"></typeparam>
+    /// <typeparam name="TComponent"></typeparam>
+    /// <param name="visitor"></param>
+    /// <param name="component"></param>
     public delegate void VisitComponentMethod<TNode, TComponent>(Visitor<TNode, TComponent> visitor, TComponent component) where TNode : class, INode where TComponent : class, IComponent;
 
+
+    /// <summary>
+    /// Visit Node Method of Module
+    /// </summary>
+    /// <typeparam name="TNode"></typeparam>
+    /// <typeparam name="TComponent"></typeparam>
+    /// <param name="visitor"></param>
+    /// <param name="node"></param>
     public delegate void VisitNodeMethodOfModule<TNode, TComponent>(IVisitorModule visitor, TNode node) where TNode : class, INode where TComponent : class, IComponent;
+
+    /// <summary>
+    /// Visit Component Of Module
+    /// </summary>
+    /// <typeparam name="TNode"></typeparam>
+    /// <typeparam name="TComponent"></typeparam>
+    /// <param name="visitor"></param>
+    /// <param name="component"></param>
     public delegate void VisitComponentMethodOfModule<TNode, TComponent>(IVisitorModule visitor, TComponent component) where TNode : class, INode where TComponent : class, IComponent;
 
     /// <summary>
@@ -106,13 +138,13 @@ namespace Fusee.Xene
             public Dictionary<Type, VisitComponentMethodOfModule<TNode, TComponent>> ModuleComponents = new();
         }
 
-
         // The list of visitor methods defined in a concrete child class of Visitor
         private VisitorSet _visitors;
 
         // The static list of all known sets of visitor methods
         // This is kept to avoid building the visitor map again and again different instances of the same visitor.
-        private static Dictionary<Type, VisitorSet> _visitorMap;
+        // Removed this functionality as we now have the possibility to "side load" additional visitors even with the same VisitorType
+        // private static Dictionary<Type, VisitorSet> _visitorMap;
         #endregion
 
         #region Public Traversal Methods
@@ -411,6 +443,9 @@ namespace Fusee.Xene
 
         #endregion
 
+        /// <summary>
+        /// The list of visitor modules defined during <see cref="Visitor{TNode, TComponent}"/> generation.
+        /// </summary>
         public List<IVisitorModule> VisitorModules = new();
 
         /// <summary>
@@ -421,19 +456,12 @@ namespace Fusee.Xene
             if (_visitors != null)
                 return;
 
-            if (_visitorMap == null)
-                _visitorMap = new Dictionary<Type, VisitorSet>();
-
-            var myType = GetType();
-            if (_visitorMap.TryGetValue(myType, out _visitors))
-                return;
-
             _visitors = new VisitorSet();
-            AddVisitMethods();
             foreach (var module in VisitorModules)
             {
                 AddVisitMethodsFromModule(module.GetType());
             }
+            AddVisitMethods();
         }
 
         /// <summary>
@@ -462,7 +490,6 @@ namespace Fusee.Xene
                     _visitors.ModuleNodes.Add(paramType, VisitorCallerFactory.MakeNodeVistorForModule<TNode, TComponent>(methodInfo));
                 }
             }
-            _visitorMap.Add(moduleType, _visitors);
         }
 
         /// <summary>
@@ -492,7 +519,6 @@ namespace Fusee.Xene
                     _visitors.Nodes.Add(paramType, VisitorCallerFactory.MakeNodeVistor<TNode, TComponent>(methodInfo));
                 }
             }
-            _visitorMap.Add(type, _visitors);
         }
 
         private static bool IsVisitor(MethodInfo methodInfo)
@@ -557,7 +583,7 @@ namespace Fusee.Xene
             if (node?.EnumComponents == null)
                 return;
             // Visit each component
-            foreach (TComponent component in node.EnumComponents)
+            foreach (var component in node.EnumComponents.Cast<TComponent>())
             {
                 CurrentComponent = component;
                 DoVisitComponent(component);

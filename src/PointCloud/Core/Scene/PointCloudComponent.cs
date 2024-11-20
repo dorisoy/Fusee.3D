@@ -1,4 +1,4 @@
-﻿using Fusee.Engine.Core.Scene;
+using Fusee.Engine.Core.Scene;
 using Fusee.Math.Core;
 using Fusee.PointCloud.Common;
 
@@ -32,10 +32,10 @@ namespace Fusee.PointCloud.Core.Scene
         /// <summary>
         /// Reference to the Camera whose properties are used to control the visibility of point cloud chunks (octants).
         /// </summary>
-        public Camera Camera;
+        public Camera? Camera;
 
         /// <summary>
-        /// Instantiates the <see cref="IPointCloudImp{TGpuData}"/>.
+        /// Instantiates the <see cref="IPointCloudImpBase"/>.
         /// </summary>
         public PointCloudComponent(IPointCloudImpBase imp, RenderMode renderMode = RenderMode.StaticMesh)
         {

@@ -1,23 +1,24 @@
-﻿using Fusee.Engine.Common;
+﻿using CommunityToolkit.Diagnostics;
+using Fusee.Engine.Common;
 using Fusee.Math.Core;
 using System;
 
 namespace Fusee.Engine.Core.Scene
 {
     /// <summary>
-    /// 
+    ///
     /// </summary>
     public class InstanceData : SceneComponent, IManagedInstanceData
     {
         /// <summary>
         /// MeshChanged event notifies observing MeshManager about property changes and the Mesh's disposal.
         /// </summary>
-        public event EventHandler<InstanceDataChangedEventArgs> DataChanged;
+        public event EventHandler<InstanceDataChangedEventArgs>? DataChanged;
 
         /// <summary>
         /// MeshChanged event notifies observing MeshManager about property changes and the Mesh's disposal.
         /// </summary>
-        public event EventHandler<InstanceDataChangedEventArgs> DisposeData;
+        public event EventHandler<InstanceDataChangedEventArgs>? DisposeData;
 
         /// <summary>
         /// The position of each instance. This array needs to be as long as <see cref="Amount"/>.
@@ -27,8 +28,7 @@ namespace Fusee.Engine.Core.Scene
             get => _positions;
             set
             {
-                if (Amount != value.Length)
-                    throw new ArgumentOutOfRangeException();
+                Guard.IsEqualTo(value.Length, Amount);
                 _positions = value;
                 DataChanged?.Invoke(this, new InstanceDataChangedEventArgs(this, InstanceDataChangedEnum.Transform));
             }
@@ -38,50 +38,50 @@ namespace Fusee.Engine.Core.Scene
         /// <summary>
         /// The rotation of each instance. This array needs to be as long as <see cref="Amount"/>.
         /// </summary>
-        public float3[] Rotations
+        public float3[]? Rotations
         {
             get => _rotations;
             set
             {
-                if (Amount != value.Length)
-                    throw new ArgumentOutOfRangeException();
+                Guard.IsNotNull(value);
+                Guard.IsEqualTo(value.Length, Amount);
                 _rotations = value;
                 DataChanged?.Invoke(this, new InstanceDataChangedEventArgs(this, InstanceDataChangedEnum.Transform));
             }
         }
-        private float3[] _rotations;
+        private float3[]? _rotations;
 
         /// <summary>
         /// The scale of each instance. This array needs to be as long as <see cref="Amount"/>.
         /// </summary>
-        public float3[] Scales
+        public float3[]? Scales
         {
             get => _scales;
             set
             {
-                if (Amount != value.Length)
-                    throw new ArgumentOutOfRangeException();
+                Guard.IsNotNull(value);
+                Guard.IsEqualTo(value.Length, Amount);
                 _scales = value;
                 DataChanged?.Invoke(this, new InstanceDataChangedEventArgs(this, InstanceDataChangedEnum.Transform));
             }
         }
-        private float3[] _scales;
+        private float3[]? _scales;
 
         /// <summary>
         /// The color of each instance. This array needs to be as long as <see cref="Amount"/>.
         /// </summary>
-        public float4[] Colors
+        public uint[]? Colors
         {
             get => _colors;
             set
             {
-                if (Amount != value.Length)
-                    throw new ArgumentOutOfRangeException();
+                Guard.IsNotNull(value);
+                Guard.IsEqualTo(value.Length, Amount);
                 _colors = value;
                 DataChanged?.Invoke(this, new InstanceDataChangedEventArgs(this, InstanceDataChangedEnum.Colors));
             }
         }
-        private float4[] _colors;
+        private uint[]? _colors;
 
         /// <summary>
         /// The amount of instances that will be rendered.
@@ -91,7 +91,7 @@ namespace Fusee.Engine.Core.Scene
         /// <summary>
         /// The unique id of this object.
         /// </summary>
-        public Suid SessionUniqueId { get; } = Suid.GenerateSuid();
+        public Guid UniqueId { get; } = Guid.NewGuid();
 
         /// <summary>
         /// Creates a new instance of type <see cref="InstanceData"/>. Will fail if the length of a provided array doesn't match <see cref="Amount"/>.
@@ -102,31 +102,27 @@ namespace Fusee.Engine.Core.Scene
         /// <param name="scales">The scale of each instance.</param>
         /// <param name="colors">The color of each instance.</param>
         /// <exception cref="ArgumentOutOfRangeException"></exception>
-        public InstanceData(int amount, float3[] positions, float3[] rotations = null, float3[] scales = null, float4[] colors = null)
+        public InstanceData(int amount, float3[] positions, float3[]? rotations = null, float3[]? scales = null, uint[]? colors = null)
         {
             Amount = amount;
-            if (Amount != positions.Length)
-                throw new ArgumentOutOfRangeException();
+            Guard.IsEqualTo(positions.Length, Amount);
             _positions = positions;
 
             if (scales != null)
             {
-                if (Amount != scales.Length)
-                    throw new ArgumentOutOfRangeException();
+                Guard.IsEqualTo(scales.Length, Amount);
                 _scales = scales;
             }
 
             if (rotations != null)
             {
-                if (Amount != rotations.Length)
-                    throw new ArgumentOutOfRangeException();
+                Guard.IsEqualTo(rotations.Length, Amount);
                 _rotations = rotations;
             }
 
             if (colors != null)
             {
-                if (Amount != colors.Length)
-                    throw new ArgumentOutOfRangeException();
+                Guard.IsEqualTo(colors.Length, Amount);
                 _colors = colors;
             }
         }

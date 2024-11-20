@@ -7,6 +7,7 @@ using OpenTK.Windowing.Desktop;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using System;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -238,9 +239,11 @@ namespace Fusee.Engine.Imp.Graphics.Desktop
 
             }
             catch
+#pragma warning disable ERP022 // Unobserved exception in generic exception handler
             {
                 _gameWindow = new RenderCanvasGameWindow(this, width, height, false, startVisible, minWidth, minHeight);
             }
+#pragma warning restore ERP022 // Unobserved exception in generic exception handler
 
             WindowHandle = new WindowHandle()
             {
@@ -313,6 +316,11 @@ namespace Fusee.Engine.Imp.Graphics.Desktop
         /// </summary>
         public event EventHandler<ResizeEventArgs> Resize;
 
+        /// <summary>
+        /// Occurs when [close] is called.
+        /// </summary>
+        public event EventHandler<CancelEventArgs> Closing;
+
         #endregion
 
         #region Members
@@ -349,7 +357,6 @@ namespace Fusee.Engine.Imp.Graphics.Desktop
         {
             UnLoad?.Invoke(this, new InitEventArgs());
         }
-
         /// <summary>
         /// Does the update of this instance.
         /// </summary>
@@ -364,6 +371,14 @@ namespace Fusee.Engine.Imp.Graphics.Desktop
         public virtual void DoRender()
         {
             Render?.Invoke(this, new RenderEventArgs());
+        }
+
+        /// <summary>
+        /// Does close the window
+        /// </summary>
+        public virtual void DoClose(CancelEventArgs e)
+        {
+            Closing?.Invoke(this, e);
         }
 
         /// <summary>
@@ -461,7 +476,23 @@ namespace Fusee.Engine.Imp.Graphics.Desktop
         /// <param name="cursorType">The type of the cursor to set.</param>
         public void SetCursor(CursorType cursorType)
         {
-            // Currently not supported by OpenTK... Too bad.
+            switch (cursorType)
+            {
+                case CursorType.Standard:
+                    _gameWindow.Cursor = MouseCursor.Default;
+                    break;
+                case CursorType.Hand:
+                    _gameWindow.Cursor = MouseCursor.Hand;
+                    break;
+                case CursorType.HResize:
+                    _gameWindow.Cursor = MouseCursor.HResize;
+                    break;
+                case CursorType.VResize:
+                    _gameWindow.Cursor = MouseCursor.VResize;
+                    break;
+                default:
+                    break;
+            }
         }
 
         /// <summary>
@@ -490,8 +521,6 @@ namespace Fusee.Engine.Imp.Graphics.Desktop
             if (_gameWindow != null)
             {
                 _gameWindow.UpdateFrequency = 60;
-                _gameWindow.RenderFrequency = 0;
-
                 _gameWindow.Run();
             }
         }

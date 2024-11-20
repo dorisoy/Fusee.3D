@@ -1322,7 +1322,7 @@ namespace Fusee.Engine.Imp.Graphics.Android
         /// </summary>
         /// <param name="instanceImp">The <see cref="IInstanceDataImp"/> instance.</param>
         /// <param name="instanceColors">The instance colors.</param>
-        public void SetInstanceColor(IInstanceDataImp instanceImp, float4[] instanceColors)
+        public void SetInstanceColor(IInstanceDataImp instanceImp, uint[] instanceColors)
         {
             if (instanceColors == null)
                 return;
@@ -1334,7 +1334,7 @@ namespace Fusee.Engine.Imp.Graphics.Android
             }
 
             //TODO: can we use AttributeLocations.Color?
-            int sizeOfCol = sizeof(float) * 4;
+            int sizeOfCol = sizeof(uint);
             int iColorBytes = instanceColors.Length * sizeOfCol;
             int instanceColorBo = ((InstanceDataImp)instanceImp).InstanceColorBufferObject;
             if (instanceColorBo == 0)
@@ -2785,6 +2785,33 @@ namespace Fusee.Engine.Imp.Graphics.Android
         #endregion
 
         #region Picking related Members
+
+        /// <summary>
+        /// Retrieve pixels from bound framebuffer
+        /// </summary>
+        /// <param name="x">x pixel position</param>
+        /// <param name="y">y pixel position</param>
+        /// <param name="pixelFormat">format to retrieve, this has to match the current bound FBO!</param>
+        /// <param name="width">how many pixel in x direction</param>
+        /// <param name="height">how many pixel in y direction</param>
+        /// <returns><see cref="ReadOnlySpan{T}"/> with pixel content</returns>
+        /// <remarks>Does usually not throw on error (e. g. wrong pixel format, out of bounds, etc), uses GL.GetError() to retrieve
+        /// potential error</remarks>
+        public ReadOnlySpan<byte> ReadPixels(int x, int y, ImagePixelFormat pixelFormat, int width, int height)
+        {
+            var format = GetTexturePixelInfo(pixelFormat);
+            var data = new byte[width * height * pixelFormat.BytesPerPixel];
+
+            GL.ReadPixels(x, y, 1, 1, format.Format, format.PxType, data);
+
+            var err = GL.GetErrorCode();
+            if (err != ErrorCode.NoError)
+            {
+                throw new Exception($"ReadPixel failed with error code {err}!");
+            }
+
+            return data;
+        }
 
         /// <summary>
         /// Retrieves a sub-image of the given region.

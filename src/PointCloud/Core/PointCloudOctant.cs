@@ -1,4 +1,4 @@
-﻿using Fusee.Math.Core;
+using Fusee.Math.Core;
 using Fusee.PointCloud.Common;
 using Fusee.Structures;
 
@@ -18,6 +18,12 @@ namespace Fusee.PointCloud.Core
         /// Number of point cloud points, this node holds.
         /// </summary>
         public int NumberOfPointsInNode { get; set; }
+
+        /// <summary>
+        /// Number of point cloud points, this node can hold.
+        /// This octant is of dynamic size, will return <see cref="NumberOfPointsInNode"/>
+        /// </summary>
+        public int PointCapacity => NumberOfPointsInNode;
 
         /// <summary>
         /// The globally unique identifier for this octant.
@@ -42,7 +48,7 @@ namespace Fusee.PointCloud.Core
         /// <summary>
         /// Length, width and height of this Octant.
         /// </summary>
-        public double Size
+        public double3 Size
         {
             get { return _size; }
             set
@@ -52,12 +58,12 @@ namespace Fusee.PointCloud.Core
                 Max = _center + 0.5f * _size;
             }
         }
-        private double _size;
+        private double3 _size;
 
         /// <summary>
         /// List of child octants.
         /// </summary>
-        public IEmptyOctant<double3, double>[] Children { get; private set; }
+        public IEmptyOctant<double3, double3>[] Children { get; private set; }
 
         /// <summary>
         /// If true this octant does not have any children.
@@ -90,13 +96,24 @@ namespace Fusee.PointCloud.Core
         public double3 Max { get; private set; }
 
         /// <summary>
+        /// True, if this octant is marked as proxy/helper node.
+        /// Proxy nodes can have children but don't necessarily have any payload.
+        /// </summary>
+        public bool IsProxy { get; } = false;
+
+        /// <summary>
+        /// Support lazy loading.
+        /// </summary>
+        public bool Initialized { get; } = true;
+
+        /// <summary>
         /// Creates a new instance of type <see cref="PointCloudOctant"/>.
         /// </summary>
         /// <param name="center">The center of this octant.</param>
         /// <param name="size">The size (in all three dimensions) of this octant.</param>
         /// <param name="octId"></param>
         /// <param name="children">The octants child octants.</param>
-        public PointCloudOctant(double3 center, double size, OctantId octId, PointCloudOctant[] children = null)
+        public PointCloudOctant(double3 center, double3 size, OctantId octId, PointCloudOctant[]? children = null)
         {
             Center = center;
             Size = size;
@@ -109,7 +126,7 @@ namespace Fusee.PointCloud.Core
             Level = OctId.Level;
             IsVisible = false;
 
-            int.TryParse(OctId[Level - 1].ToString(), out int posInParent);
+            _ = int.TryParse(OctId[Level - 1].ToString(), out int posInParent);
             PosInParent = posInParent;
 
             if (children == null)
@@ -125,6 +142,8 @@ namespace Fusee.PointCloud.Core
         /// <param name="camPos">Position of the camera.</param>
         /// <param name="screenHeight">Hight of the canvas.</param>
         /// <param name="fov">Field of view.</param>
+        /// <param name="translation">Translation of node</param>
+        /// <param name="scale">Scale of node</param>
         public void ComputeScreenProjectedSize(double3 camPos, int screenHeight, float fov, float3 translation, float3 scale)
         {
             var translatedCenter = Center + new double3(translation);
@@ -132,7 +151,7 @@ namespace Fusee.PointCloud.Core
             var distance = (translatedCenter - camPos).Length;
             if (translatedCenter == camPos)
                 distance = 0.0001f;
-            var slope = (float)System.Math.Tan(fov / 2d);
+            var slope = System.Math.Abs((float)System.Math.Tan(fov / 2d));
 
             var maxRad = System.Math.Max(System.Math.Max(scaledRad.x, scaledRad.y), scaledRad.z);
             ProjectedScreenSize = screenHeight / 2d * maxRad / (slope * distance);
@@ -142,7 +161,7 @@ namespace Fusee.PointCloud.Core
         /// Instantiates a child octant at the given position.
         /// </summary>
         /// <param name="atPosInParent">The <see cref="PosInParent"/> the new child has.</param>
-        public IEmptyOctant<double3, double> CreateChild(int atPosInParent)
+        public IEmptyOctant<double3, double3> CreateChild(int atPosInParent)
         {
             throw new System.NotImplementedException();
         }
@@ -152,11 +171,14 @@ namespace Fusee.PointCloud.Core
         /// Returns true if one of the Frustum planes is intersecting this octant.
         /// </summary>
         /// <param name="frustum">The frustum to test against.</param>
+        /// <param name="translation">Additional translation.</param>
+        /// <param name="scale">Additional scale.</param>
         /// <returns>false if fully outside, true if inside or intersecting.</returns>
         public bool InsideOrIntersectingFrustum(FrustumF frustum, float3 translation, float3 scale)
         {
+            //var maxSize = (float)System.Math.Max(System.Math.Max(Size.x, Size.y), Size.z);
             var translatedCenter = new float3(Center) + translation;
-            var scaledSize = new float3((float)Size) * scale;
+            var scaledSize = new float3(Size) * scale;
             return frustum.Near.InsideOrIntersecting(translatedCenter, scaledSize) &
                 frustum.Far.InsideOrIntersecting(translatedCenter, scaledSize) &
                 frustum.Left.InsideOrIntersecting(translatedCenter, scaledSize) &
@@ -173,12 +195,13 @@ namespace Fusee.PointCloud.Core
         /// <returns>false if fully outside, true if inside or intersecting.</returns>
         public bool InsideOrIntersectingFrustum(FrustumF frustum)
         {
-            return frustum.Near.InsideOrIntersecting(new float3(Center), (float)Size) &
-                frustum.Far.InsideOrIntersecting(new float3(Center), (float)Size) &
-                frustum.Left.InsideOrIntersecting(new float3(Center), (float)Size) &
-                frustum.Right.InsideOrIntersecting(new float3(Center), (float)Size) &
-                frustum.Top.InsideOrIntersecting(new float3(Center), (float)Size) &
-                frustum.Bottom.InsideOrIntersecting(new float3(Center), (float)Size);
+            var sizeF = (float3)Size;
+            return frustum.Near.InsideOrIntersecting(new float3(Center), sizeF) &
+                frustum.Far.InsideOrIntersecting(new float3(Center), sizeF) &
+                frustum.Left.InsideOrIntersecting(new float3(Center), sizeF) &
+                frustum.Right.InsideOrIntersecting(new float3(Center), sizeF) &
+                frustum.Top.InsideOrIntersecting(new float3(Center), sizeF) &
+                frustum.Bottom.InsideOrIntersecting(new float3(Center), sizeF);
         }
 
         /// <summary>
@@ -191,6 +214,30 @@ namespace Fusee.PointCloud.Core
             return (point.x >= Min.x && point.x <= Max.x) &&
             (point.y >= Min.y && point.y <= Max.y) &&
             (point.z >= Min.z && point.z <= Max.z);
+        }
+
+        /// <summary>
+        /// Returns true if a sphere is completely inside or is intersecting this <see cref="PointCloudOctant"/>
+        /// see: https://web.archive.org/web/19991129023147/http://www.gamasutra.com/features/19991018/Gomez_4.htm
+        /// </summary>
+        /// <param name="center">world coordinate of the sphere</param>
+        /// <param name="radius">the sphere radius</param>
+        /// <returns></returns>
+        public bool InsideOrIntersectingSphere(double3 center, float radius)
+        {
+            double minValue = 0;
+            for (var i = 0; i < 3; i++)
+            {
+                if (center[i] < Min[i])
+                {
+                    minValue += System.Math.Sqrt(center[i] - Min[i]);
+                }
+                else if (center[i] > Max[i])
+                {
+                    minValue += System.Math.Sqrt(center[i] - Max[i]);
+                }
+            }
+            return minValue <= (radius * radius);
         }
 
         /// <summary>
